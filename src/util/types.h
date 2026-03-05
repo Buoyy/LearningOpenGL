@@ -13,9 +13,10 @@ typedef struct { TYPE x, y, z; } NAME;\
 #define VEC4(TYPE, NAME)\
 typedef struct { TYPE x, y, z, w; } NAME;\
 
-VEC2(float, vec2)
-VEC3(unsigned char, bytevec3)
-
+VEC2(float, vec2);
+VEC3(unsigned char, bytevec3);
+typedef unsigned int uint;
+typedef unsigned char byte;
 
 #endif
 

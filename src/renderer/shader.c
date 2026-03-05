@@ -25,11 +25,11 @@ static bool shader_part_validate(unsigned int id)
         switch (type)
         {
             case GL_VERTEX_SHADER: 
-                strcpy(typename, "VERT"); break;
+                strncpy(typename, "VERT", 4); break;
             case GL_FRAGMENT_SHADER:
-                strcpy(typename, "VERT"); break;
+                strncpy(typename, "VERT", 4); break;
             default: 
-                strcpy(typename, "NULL"); break;
+                strncpy(typename, "NULL", 4); break;
         }
         GL(glGetShaderInfoLog(id, INFO_LOG_LENGTH, NULL, info_log));
         fprintf(stderr, "ERROR::SHADER::%s::COMPILE_FAIL:%s\n", typename, info_log);

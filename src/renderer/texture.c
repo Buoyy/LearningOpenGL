@@ -1,0 +1,48 @@
+#include "renderer/texture.h"
+#include "util/types.h"
+#include "util/debug.h"
+#include <glad/glad.h>
+#include "stb_image.h"
+
+void texture_2d_create(texture_2d *tex, uint index)
+{
+    GL(glGenTextures(1, &tex->id));
+    tex->index = GL_TEXTURE0 + index;
+    texture_2d_bind(tex);
+}
+
+void texture_2d_activate(texture_2d *tex)
+{
+    GL(glActiveTexture(tex->index));
+    texture_2d_bind(tex);
+}
+
+void texture_2d_bind(texture_2d *tex)
+{
+    GL(glBindTexture(GL_TEXTURE_2D, tex->id));
+}
+
+void texture_2d_unbind()
+{
+    GL(glBindTexture(GL_TEXTURE_2D, 0));
+}
+
+void texture_2d_param(uint pname, uint param)
+{
+    GL(glTexParameteri(GL_TEXTURE_2D, pname, param));
+}
+
+void texture_2d_load(const char *filepath, uint format)
+{
+    int x, y, channels;
+    byte *pixels = stbi_load(filepath, &x, &y, &channels, 0);
+    ASSERT(pixels);
+    GL(glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, pixels));
+    GL(glGenerateMipmap(GL_TEXTURE_2D));
+    stbi_image_free(pixels);
+}
+
+void texture_2d_destroy(texture_2d *tex)
+{
+    GL(glDeleteTextures(1, &tex->id));
+}

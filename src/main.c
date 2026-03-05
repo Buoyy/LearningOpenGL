@@ -1,10 +1,12 @@
 #include "renderer/renderer.h"
 #include "engine/window.h"
-#include "util/debug.h"
+#include "renderer/texture.h"
+// #include "util/debug.h"
 #include "renderer/shader.h"
 #include "renderer/vert_array.h"
 #include "renderer/vert_buf.h"
 #include "renderer/index_buf.h"
+#include "util/types.h"
 
 #include <stb_image.h>
 
@@ -60,7 +62,7 @@ int main()
     va_unbind();
 
     // Texture loading 
-    unsigned int texture1, texture2;
+    /*unsigned int texture1, texture2;
     GL(glGenTextures(1, &texture1));
     GL(glBindTexture(GL_TEXTURE_2D, texture1));
     GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
@@ -94,7 +96,24 @@ int main()
     }
     GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
     GL(glGenerateMipmap(GL_TEXTURE_2D));
-    stbi_image_free(data);
+    stbi_image_free(data);*/
+
+    stbi_set_flip_vertically_on_load(true);
+    texture_2d container; 
+    texture_2d_create(&container, 0);
+    texture_2d_param(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    texture_2d_param(GL_TEXTURE_WRAP_T, GL_REPEAT);
+    texture_2d_param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    texture_2d_param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    texture_2d_load("res/textures/container.jpg", GL_RGB);
+
+    texture_2d face; 
+    texture_2d_create(&face, 1);
+    texture_2d_param(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    texture_2d_param(GL_TEXTURE_WRAP_T, GL_REPEAT);
+    texture_2d_param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    texture_2d_param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    texture_2d_load("res/textures/awesomeface.png", GL_RGBA);
 
     shader_t shader;
     if (!shader_create(&shader, "res/shaders/basic.vert", "res/shaders/basic.frag"))
@@ -108,10 +127,8 @@ int main()
         renderer_clear((bytevec3){50, 97, 97});
 
         shader_use(&shader);
-        GL(glActiveTexture(GL_TEXTURE0));
-        GL(glBindTexture(GL_TEXTURE_2D, texture1));
-        GL(glActiveTexture(GL_TEXTURE1));
-        GL(glBindTexture(GL_TEXTURE_2D, texture2));
+        texture_2d_activate(&container);
+        texture_2d_activate(&face);
         va_bind(&va);
         renderer_draw_elements(GL_TRIANGLES, &ib);
 
@@ -120,6 +137,9 @@ int main()
     }
 
     // Final destruction, hell yeah.
+    
+    texture_2d_destroy(&container);
+    texture_2d_destroy(&face);
     ib_destroy(&ib);
     vb_destroy(&vb);
     va_destroy(&va);
