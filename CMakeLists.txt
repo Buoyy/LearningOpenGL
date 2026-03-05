@@ -16,7 +16,7 @@ target_include_directories(game
     PRIVATE src
 )
 if (MSVC)
-    target_compile_options(game PRIVATE /W4 /WX)
+    target_compile_options(game PRIVATE /W4)
 else()
     target_compile_options(game PRIVATE -Wall -Wextra -Werror)
 endif()
@@ -38,7 +38,6 @@ endif()
 
 if (MSVC)
     target_link_libraries(game
-        m
         glfw
         opengl32
     )
