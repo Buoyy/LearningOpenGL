@@ -36,8 +36,16 @@ if(NOT glfw3_FOUND)
     FetchContent_MakeAvailable(glfw)
 endif()
 
-target_link_libraries(game
-    m
-    glfw
-    GL
-)
+if (MSVC)
+    target_link_libraries(game
+        m
+        glfw
+        opengl32
+    )
+else()
+    target_link_libraries(game
+        m
+        glfw
+        GL
+    )
+endif()
