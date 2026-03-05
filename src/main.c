@@ -10,7 +10,7 @@
 
 #include <stb_image.h>
 
-// #include <math.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -61,43 +61,6 @@ int main()
     ib_push_indices(&ib, GL_STATIC_DRAW);
     va_unbind();
 
-    // Texture loading 
-    /*unsigned int texture1, texture2;
-    GL(glGenTextures(1, &texture1));
-    GL(glBindTexture(GL_TEXTURE_2D, texture1));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-
-    stbi_set_flip_vertically_on_load(true);
-    int width, height, nr_channels;
-    unsigned char *data = stbi_load("res/textures/container.jpg", &width, &height, &nr_channels, 0);
-    if (!data)
-    {
-        perror("ERROR::STBI::LOAD_FAIL");
-        return 1;
-    }
-    GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data));
-    GL(glGenerateMipmap(GL_TEXTURE_2D));
-    stbi_image_free(data);
-    
-    GL(glGenTextures(1, &texture2));
-    GL(glBindTexture(GL_TEXTURE_2D,texture2));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    data = stbi_load("res/textures/awesomeface.png", &width, &height, &nr_channels, 0);
-    if (!data)
-    {
-        perror("ERROR::STBI::LOAD_FAIL");
-        return 1;
-    }
-    GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
-    GL(glGenerateMipmap(GL_TEXTURE_2D));
-    stbi_image_free(data);*/
-
     stbi_set_flip_vertically_on_load(true);
     texture_2d container; 
     texture_2d_create(&container, 0);
@@ -126,7 +89,8 @@ int main()
     {
         renderer_clear((bytevec3){50, 97, 97});
 
-        shader_use(&shader);
+        float mix_amount = (sin(2*glfwGetTime())+1)/2;
+        shader_set_float(&shader, "mix_amount", mix_amount);
         texture_2d_activate(&container);
         texture_2d_activate(&face);
         va_bind(&va);
