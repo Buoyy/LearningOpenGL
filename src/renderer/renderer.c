@@ -14,12 +14,13 @@ boolean renderer_init(window_t *window)
         return false;
     }
     GL(glViewport(0, 0, window->width, window->height));
+    GL(glEnable(GL_DEPTH_TEST));
     return true;
 }
 
 void renderer_clear(solid_color color)
 {
-    GL(glClear(GL_COLOR_BUFFER_BIT));
+    GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     GL(glClearColor((float)color.x/255, (float)color.y/255, (float)color.z/255, 1.0f));
 }
 

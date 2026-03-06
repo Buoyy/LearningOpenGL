@@ -2,18 +2,18 @@
 #define R_VERTEX_BUFFER_H
 
 #include "util/vector.h"
-#include "util/types.h"
 #include <cglm/cglm.h>
+#include <stdarg.h>
 
 typedef struct 
 {
-    vec2 pos;
-    solid_color color;
+    vec3 pos;
     vec2 uv;
 } vert;
 
 // A vector (dynamic array) of vertices.
 VECTOR_DECLARE(vert, vertvec);
+void vertvec_push_list(vertvec *vec, int count, ...);
 
 typedef struct 
 {

@@ -4,6 +4,14 @@
 #include <glad/glad.h>
 
 VECTOR_DEFINE(vert, vertvec);
+void vertvec_push_list(vertvec *vec, int count, ...)
+{
+    va_list verts;
+    va_start(verts, count);
+    for (int i = 0; i < count; ++i)
+        vertvec_push(vec, va_arg(verts, vert));
+    va_end(verts);
+}
 
 void vb_create(vert_buf *vb) 
 {

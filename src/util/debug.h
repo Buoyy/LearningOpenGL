@@ -18,10 +18,23 @@
 #define BREAKPOINT() __debugbreak()
 #endif
 
-#define ASSERT(X) if (!(X)) BREAKPOINT()
-#define ASSERTM(X, MSG)\
-    if (!(X)) BREAKPOINT();\
-    fprintf(stderr, MSG);\
+#define ERR_ASSERT(X)\
+    fprintf(stderr, "ASSERT::FAIL(%s)\n", #X);\
+    fprintf(stderr, "FILE::%s\n\n", __FILE__);\
+    fprintf(stderr, "FUNC::%s, LINE::%d\n", __func__, __LINE__);\
+
+#define ASSERT(X) if (!(X))\
+{\
+    ERR_ASSERT(X);\
+    BREAKPOINT();\
+}\
+
+#define ASSERTM(X, FMT, ...) if (!(X))\
+{\
+    ERR_ASSERT(X);\
+    fprintf(stderr, "\n" FMT "\n", ##__VA_ARGS__);\
+    BREAKPOINT();\
+}
 
 #define GL(X) debug_clear_errors(); X; debug_halt_on_error(__FILE__, __LINE__);
 #else
