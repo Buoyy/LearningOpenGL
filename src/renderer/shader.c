@@ -10,9 +10,11 @@
 
 DEF_SHADER_UNI_SET(int, int, i);
 DEF_SHADER_UNI_SET(float, float, f);
-DEF_SHADER_UNI_SET(int, boolean, i);
+DEF_SHADER_UNI_SET(boolean, boolean, i);
 
-static bool shader_part_validate(unsigned int id)
+DEF_SHADER_MAT_SET_SQ(4);
+
+static boolean shader_part_validate(unsigned int id)
 {
     int success;
     GL(glGetShaderiv(id, GL_COMPILE_STATUS, &success));
@@ -38,7 +40,7 @@ static bool shader_part_validate(unsigned int id)
     return true;
 }
 
-static bool shader_validate(shader_t *shader)
+static boolean shader_validate(shader_t *shader)
 {
     int success;
     GL(glGetProgramiv(shader->id, GL_LINK_STATUS, &success));
@@ -82,7 +84,7 @@ static char *read_entire_file(const char *path)
     return buf;
 }
 
-bool shader_create(shader_t *shader, const char *vert_path, const char *frag_path)
+boolean shader_create(shader_t *shader, const char *vert_path, const char *frag_path)
 {
     GL(unsigned int vert = glCreateShader(GL_VERTEX_SHADER));
     char *vert_src = read_entire_file(vert_path);

@@ -3,14 +3,16 @@
 
 #include "util/vector.h"
 #include "util/types.h"
+#include <cglm/cglm.h>
 
 typedef struct 
 {
     vec2 pos;
-    bytevec3 color;
+    solid_color color;
     vec2 uv;
 } vert;
 
+// A vector (dynamic array) of vertices.
 VECTOR_DECLARE(vert, vertvec);
 
 typedef struct 

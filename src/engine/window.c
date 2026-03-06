@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
-bool window_create(window_t *window, int width, int height, const char *title)
+boolean window_create(window_t *window, int width, int height, const char *title)
 {
     if (!glfwInit())
     {
@@ -30,7 +30,7 @@ bool window_create(window_t *window, int width, int height, const char *title)
     return true;
 }
 
-bool window_should_close(window_t *window)
+boolean window_should_close(window_t *window)
 {
     return glfwWindowShouldClose(window->handle);
 }

@@ -4,6 +4,11 @@
 
 #define MAX_ERROR_LENGTH 30 // INVALID_FRAMEBUFFER_OPERATION
 
+DEF_PRINT_GLM_VEC(2)
+DEF_PRINT_GLM_VEC(3)
+DEF_PRINT_GLM_VEC(4)
+DEF_PRINT_MAT_SQ(4)
+
 void debug_clear_errors()
 {
     while (glGetError() != GL_NO_ERROR);

@@ -1,8 +1,6 @@
 #ifndef R_VERTEX_ARRAY_H
 #define R_VERTEX_ARRAY_H
 
-#include <stdbool.h>
-
 typedef struct 
 { 
     unsigned int id; 

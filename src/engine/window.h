@@ -4,7 +4,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <stdbool.h>
+#include "util/types.h"
 
 typedef struct
 {
@@ -14,11 +14,11 @@ typedef struct
 } window_t;
 
 // Creates a window and sets it as the OpenGL context.
-bool window_create(window_t *window, int width, int height, const char *title);
+boolean window_create(window_t *window, int width, int height, const char *title);
 
 // Checks whether the window should close. Returns true
 // when closing event has been triggered.
-bool window_should_close(window_t *window);
+boolean window_should_close(window_t *window);
 
 // Swap the windows buffers to display what has been drawn.
 void window_swap_buffers(window_t *window);

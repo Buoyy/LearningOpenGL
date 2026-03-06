@@ -1,6 +1,9 @@
 #ifndef UTIL_TYPES_H
 #define UTIL_TYPES_H
 
+#define true 1
+#define false 0
+
 #define VEC1(TYPE, NAME)\
 typedef struct { TYPE x; } NAME;\
 
@@ -13,10 +16,11 @@ typedef struct { TYPE x, y, z; } NAME;\
 #define VEC4(TYPE, NAME)\
 typedef struct { TYPE x, y, z, w; } NAME;\
 
-VEC2(float, vec2);
-VEC3(unsigned char, bytevec3);
 typedef unsigned int uint;
 typedef unsigned char byte;
+typedef byte boolean;
+
+VEC3(byte, solid_color)
 
 #endif
 

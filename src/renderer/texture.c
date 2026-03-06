@@ -1,8 +1,11 @@
 #include "renderer/texture.h"
+
 #include "util/types.h"
 #include "util/debug.h"
 #include <glad/glad.h>
 #include "stb_image.h"
+
+#include <stdarg.h>
 
 void texture_2d_create(texture_2d *tex, uint index)
 {
@@ -32,6 +35,16 @@ void texture_2d_param(uint pname, uint param)
     GL(glTexParameteri(GL_TEXTURE_2D, pname, param));
 }
 
+void texture_2d_params(texture_2d *tex, ...)
+{
+    va_list params;
+    va_start(params, tex);
+    texture_2d_param(GL_TEXTURE_WRAP_S, va_arg(params, uint));
+    texture_2d_param(GL_TEXTURE_WRAP_T, va_arg(params, uint));
+    texture_2d_param(GL_TEXTURE_MIN_FILTER, va_arg(params, uint));
+    texture_2d_param(GL_TEXTURE_MAG_FILTER, va_arg(params, uint));
+    va_end(params);
+}
 void texture_2d_load(const char *filepath, uint format)
 {
     int x, y, channels;

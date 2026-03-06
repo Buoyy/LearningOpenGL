@@ -1,11 +1,12 @@
 #include "renderer/renderer.h"
 #include "util/debug.h"
 #include "renderer/index_buf.h"
+#include "util/types.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
-bool renderer_init(window_t *window)
+boolean renderer_init(window_t *window)
 {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -16,7 +17,7 @@ bool renderer_init(window_t *window)
     return true;
 }
 
-void renderer_clear(bytevec3 color)
+void renderer_clear(solid_color color)
 {
     GL(glClear(GL_COLOR_BUFFER_BIT));
     GL(glClearColor((float)color.x/255, (float)color.y/255, (float)color.z/255, 1.0f));
