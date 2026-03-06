@@ -1,8 +1,18 @@
 #include "engine/window.h"
 
+#include "util/debug.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+
+static void framebuffer_size_callback(GLFWwindow *handle, int width, int height)
+{
+    GL(glViewport(0, 0, width, height));
+    window_t *window = glfwGetWindowUserPointer(handle);
+    window->width = width;
+    window->height = height;
+}
 
 boolean window_create(window_t *window, int width, int height, const char *title)
 {
@@ -24,6 +34,8 @@ boolean window_create(window_t *window, int width, int height, const char *title
         return false;
     }
     glfwMakeContextCurrent(window->handle);
+    glfwSetWindowUserPointer(window->handle, window);
+    glfwSetFramebufferSizeCallback(window->handle, framebuffer_size_callback);
     window->width = width;
     window->height = height;
     window->title = title;

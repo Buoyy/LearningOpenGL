@@ -232,7 +232,8 @@ int main()
         mat4 view; glm_mat4_identity(view);
         mat4 proj; glm_mat4_identity(proj);
         glm_translate(view, (vec3){0,0,-3});
-        glm_perspective(glm_rad(45), (float)4/3, .1f, 100.0f, proj);
+        float aspect = (float)window.width/window.height;
+        glm_perspective(glm_rad(45), aspect, .1f, 100.0f, proj);
 
         shader_use(&shader);
         shader_set_mat4(&shader, "view", view);
