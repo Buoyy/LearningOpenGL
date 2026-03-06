@@ -84,12 +84,12 @@ int main()
     {
         renderer_clear((solid_color){50, 97, 97});
 
-        float mix_amount = (sin(3*glfwGetTime())+1)/2;
+        float mix_amount = (float)(sin(3*glfwGetTime())+1)/2;
         shader_set_float(&shader, "mix_amount", mix_amount);
         texture_2d_activate(&container);
         texture_2d_activate(&face);
 
-        mat4 trans = GLM_MAT4_IDENTITY;
+        mat4 trans; glm_mat4_identity(trans);
         glm_translate(trans, (vec3){0.5,-0.5});
         glm_rotate(trans, (float)glfwGetTime(), (vec3){0,0,1});
         shader_set_mat4(&shader, "transform", trans);
@@ -97,9 +97,9 @@ int main()
         va_bind(&va);
         renderer_draw_elements(GL_TRIANGLES, &ib);
 
-        memcpy(trans, GLM_MAT4_IDENTITY, sizeof(mat4));
+        glm_mat4_identity(trans);
         glm_translate(trans, (vec3){-0.5,0.5});
-        float scale = sinf(glfwGetTime());
+        float scale = (float)sin(glfwGetTime());
         glm_scale(trans, (vec3){scale,scale,scale});
         shader_set_mat4(&shader, "transform", trans);
 

@@ -13,7 +13,7 @@ void va_bind(vert_array *va)
     GL(glBindVertexArray(va->id));
 }
 
-void va_add_attrib(unsigned int index, int count, int type, int normalize, int stride, const void *offset)
+void va_add_attrib(uint index, uint count, uint type, boolean normalize, size_t stride, const void *offset)
 {
     GL(glVertexAttribPointer(index, count, type, normalize, stride, offset));
     GL(glEnableVertexAttribArray(index));
