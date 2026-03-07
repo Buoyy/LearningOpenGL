@@ -9,6 +9,7 @@
 //#include "renderer/index_buf.h"
 #include "util/types.h"
 
+#include <GLFW/glfw3.h>
 #include <cglm/vec3.h>
 #include <stb_image.h>
 #include <cglm/cglm.h>
@@ -34,7 +35,6 @@ int main()
     if (!window_create(&window, WIN_WIDTH, WIN_HEIGHT, "HALO"))
         return 1;
     renderer_init(&window);
-
     vert_array va; va_create(&va);
     vert_buf vb; vb_create(&vb);
     push_verts(&vb);
@@ -86,6 +86,7 @@ int main()
         float current_frame_time = glfwGetTime();
         delta_time = current_frame_time - last_frame_time;
         last_frame_time = current_frame_time;
+        camera_move(&cam, delta_time);
 
         renderer_clear((solid_color){50, 97, 97});
 
@@ -287,43 +288,31 @@ void push_verts(vert_buf *vb)
                 .uv = {0.0f, 1.0f}
             });
 }
-/*
-   void process_input(GLFWwindow *window)
-   {
-   printf("%d", glfwGetKey(window, GLFW_KEY_ESCAPE));
-   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-   if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-   glm_vec3_sub(cam_pos, front_speed, cam_pos);
-   if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-   glm_vec3_sub(cam_pos, strafe_speed, cam_pos);
-   if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-   glm_vec3_add(cam_pos, strafe_speed, cam_pos);
-   }*/
 
 void key_callback(GLFWwindow *handle, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    (void)scancode;
+    (void)mods;
+
+    if (action != GLFW_PRESS) return;
+
+    if (key == GLFW_KEY_ESCAPE)
         glfwSetWindowShouldClose(handle, true);
 
-    if ((key == GLFW_KEY_UP || key == GLFW_KEY_W)
-            && action == GLFW_PRESS)
-        camera_process_keyboard(&cam, CAMERA_MOVE_FORWARD, delta_time);
-    if ((key == GLFW_KEY_DOWN || key == GLFW_KEY_S)
-            && action == GLFW_PRESS)
-        camera_process_keyboard(&cam, CAMERA_MOVE_BACKWARD, delta_time);
-    if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_A)
-            && action == GLFW_PRESS) 
-        camera_process_keyboard(&cam, CAMERA_MOVE_LEFT, delta_time);
-    if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_D)
-            && action == GLFW_PRESS)
-        camera_process_keyboard(&cam, CAMERA_MOVE_RIGHT, delta_time);
+    if (key == GLFW_KEY_UP || key == GLFW_KEY_W)
+        camera_process_keyboard(&cam, CAMERA_MOVE_FORWARD);
+    if (key == GLFW_KEY_DOWN || key == GLFW_KEY_S)
+        camera_process_keyboard(&cam, CAMERA_MOVE_BACKWARD);
+    if (key == GLFW_KEY_LEFT || key == GLFW_KEY_A) 
+        camera_process_keyboard(&cam, CAMERA_MOVE_LEFT);
+    if (key == GLFW_KEY_RIGHT || key == GLFW_KEY_D)
+        camera_process_keyboard(&cam, CAMERA_MOVE_RIGHT);
 
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-        camera_process_keyboard(&cam, CAMERA_MOVE_UP, delta_time);
-    if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
-        camera_process_keyboard(&cam, CAMERA_MOVE_DOWN, delta_time);
+    if (key == GLFW_KEY_SPACE)
+        camera_process_keyboard(&cam, CAMERA_MOVE_UP);
+    if (key == GLFW_KEY_LEFT_CONTROL)
+        camera_process_keyboard(&cam, CAMERA_MOVE_DOWN);
 
-    (void)scancode; (void)mods;
 }
 
 void mouse_callback(GLFWwindow *handle, double xpos, double ypos)
@@ -345,5 +334,6 @@ void mouse_callback(GLFWwindow *handle, double xpos, double ypos)
 void scroll_callback(GLFWwindow *handle, double xoffset, double yoffset)
 {
     camera_process_mouse_scroll(&cam, yoffset);
+    printf("%.2f\n", cam.zoom);
     (void)handle; (void)xoffset;
 }

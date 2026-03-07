@@ -1,4 +1,5 @@
 #include "engine/camera.h"
+#include "util/types.h"
 
 #include <cglm/cglm.h>
 #include <math.h>
@@ -11,31 +12,55 @@ void camera_create(camera *cam, float *pos, float speed, float sens)
     cam->pitch = .0f;
     cam->yaw = -90.f;
     cam->zoom = 45.f;
+    cam->m_forward = false;
+    cam->m_backward = false;
+    cam->m_left = false;
+    cam->m_right = false;
+    cam->m_up = false;
+    cam->m_down = false;
     camera_update(cam);
 }
 
-void camera_process_keyboard(camera *cam, enum camera_move direction, float dt)
+void camera_move(camera *cam, float dt)
 {
     float speed = cam->move_speed * dt;
     vec3 front;
     glm_vec3_scale(cam->front, speed, front);
     vec3 right;
     glm_vec3_scale(cam->right, speed, right);
+    vec3 up = {0,1,0};
+    glm_vec3_scale(up, speed * 0.1, up);
+    vec3 zero; glm_vec3_zero(zero);
 
+    if (cam->m_forward)
+        glm_vec3_addadd(zero, front, cam->pos);
+    else if (cam->m_backward)
+        glm_vec3_addsub(zero, front, cam->pos);
+    if (cam->m_right)
+        glm_vec3_addadd(zero, right, cam->pos);
+    else if (cam->m_left)
+        glm_vec3_addsub(zero, right, cam->pos);
+    if (cam->m_up)
+        glm_vec3_addadd(zero, up, cam->pos);
+    else if (cam->m_down)
+        glm_vec3_addsub(zero, up, cam->pos);
+
+}
+
+void camera_process_keyboard(camera *cam, enum camera_move direction)
+{
     if (direction == CAMERA_MOVE_FORWARD)
-        glm_vec3_add(cam->pos, front, cam->pos);
+        cam->m_forward = !cam->m_forward;
     if (direction == CAMERA_MOVE_BACKWARD)
-        glm_vec3_sub(cam->pos, front, cam->pos);
+        cam->m_backward = !cam->m_backward;
     if (direction == CAMERA_MOVE_RIGHT)
-        glm_vec3_add(cam->pos, right, cam->pos);
+        cam->m_right = !cam->m_right;
     if (direction == CAMERA_MOVE_LEFT)
-        glm_vec3_sub(cam->pos, right, cam->pos);
-
-    vec3 up = {0,0.1,0};
+        cam->m_left = !cam->m_left;
     if (direction == CAMERA_MOVE_UP)
-        glm_vec3_add(cam->pos, up, cam->pos);
+        cam->m_up = !cam->m_up;
     if (direction == CAMERA_MOVE_DOWN)
-        glm_vec3_sub(cam->pos, up, cam->pos);
+        cam->m_down = !cam->m_down;
 }
 
 void camera_process_mouse_move(camera *cam, float delta_x, float delta_y, boolean clamp)
@@ -45,14 +70,14 @@ void camera_process_mouse_move(camera *cam, float delta_x, float delta_y, boolea
     cam->yaw += delta_x;
     cam->pitch += delta_y;
     if (clamp)
-        glm_clamp(cam->pitch, -85.f, 85.f);
+        cam->pitch = glm_clamp(cam->pitch, -85.f, 85.f);
     camera_update(cam);
 }
 
 void camera_process_mouse_scroll(camera *cam, float offset_y)
 {
     cam->zoom -= offset_y;
-    glm_clamp(cam->zoom, 1.f, 45.f);
+    cam->zoom = glm_clamp(cam->zoom, 1.f, 45.f);
 }
 
 void camera_view_mat(camera *cam, vec4 *dest)
