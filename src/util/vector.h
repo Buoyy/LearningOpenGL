@@ -23,6 +23,7 @@ void NAME##_erase(NAME *vec, int index);\
 void NAME##_set(NAME *vec, int index, TYPE value);\
 void NAME##_insert(NAME *vec, int index, TYPE value);\
 void NAME##_clear(NAME *vec);\
+void NAME##_destroy(NAME *vec);\
 
 // Defintions. Yay.
 #define VECTOR_DEFINE(TYPE, NAME)\

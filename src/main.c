@@ -1,3 +1,4 @@
+#include "renderer/index_buf.h"
 #include "renderer/renderer.h"
 #include "engine/window.h"
 #include "engine/camera.h"
@@ -21,6 +22,7 @@
 #define WIN_HEIGHT 720
 
 void push_verts(vert_buf *vb);
+void push_indices(index_buf *ib);
 
 camera cam = { 0 };
 float delta_time = .0f, last_frame_time = .0f;
@@ -33,11 +35,18 @@ int main()
 {
     window_t window;
     if (!window_create(&window, WIN_WIDTH, WIN_HEIGHT, "HALO"))
-        return 1;
+return 1;
     renderer_init(&window);
+    camera_create(&cam, (vec3){0,0,2}, 3.f, 0.05f);
     vert_array va; va_create(&va);
     vert_buf vb; vb_create(&vb);
+    index_buf ib; ib_create(&ib);
+
     push_verts(&vb);
+    push_indices(&ib);
+
+    //vertvec_destroy(&vb.verts);
+    //uivec_destroy(&ib.indices);
 
     vec3 cube_pos[] = {
         {0.0f,  0.0f,  0.0f}, 
@@ -59,6 +68,7 @@ int main()
     va_add_attrib(1, 2, GL_FLOAT, GL_FALSE, sizeof(vert), (void*)offsetof(vert, uv)); 
 
     vb_push_verts(&vb, GL_STATIC_DRAW);
+    ib_push_indices(&ib, GL_STATIC_DRAW);
     va_unbind();
 
     stbi_set_flip_vertically_on_load(true);
@@ -78,8 +88,6 @@ int main()
     shader_use(&shader);
     shader_set_int(&shader, "tex1", 0);
     shader_set_int(&shader, "tex2", 1);
-
-    camera_create(&cam, (vec3){0,0,2}, 3.f, 0.05f);
 
     while (!window_should_close(&window))
     {
@@ -108,19 +116,19 @@ int main()
             mat4 model; glm_mat4_identity(model);
             glm_translate(model, cube_pos[i]);
             vec3 rot_axis;
-            if (i%2 == 0)
-            {
-                glm_vec3_copy((vec3){1,0.3,0}, rot_axis);
-                glm_rotate(model, (float)glfwGetTime(), rot_axis);
-            }
-            else //if (i%3 == 0)
-            {
-                glm_vec3_copy((vec3){0.3,0.1,0.5}, rot_axis);
-                glm_rotate(model, (float)2*glfwGetTime(), rot_axis);
-            }
+              if (i%2 == 0)
+              {
+              glm_vec3_copy((vec3){1,0.3,0}, rot_axis);
+              glm_rotate(model, (float)glfwGetTime(), rot_axis);
+              }
+              else //if (i%3 == 0)
+              {
+              glm_vec3_copy((vec3){0.3,0.1,0.5}, rot_axis);
+              glm_rotate(model, (float)2*glfwGetTime(), rot_axis);
+              }
             shader_set_mat4(&shader, "model", model);
 
-            renderer_draw_triangles(0, 36);
+            renderer_draw_elements(GL_TRIANGLES, &ib);
         }
 
         window_swap_buffers(&window);
@@ -131,6 +139,7 @@ int main()
 
     texture_2d_destroy(&container);
     texture_2d_destroy(&face);
+    ib_destroy(&ib);
     vb_destroy(&vb);
     va_destroy(&va);
     shader_destroy(&shader);
@@ -141,152 +150,137 @@ int main()
 void push_verts(vert_buf *vb)
 {
     // VERT PUSHER HELL YEAHH. START!
+    vertvec_push_list(&vb->verts, 24,
+            // Front face
+            (vert) {
+            .pos = {-0.5f, -0.5f, 0.5f},
+            .uv = {0, 0}
+            }, 
+            (vert) {
+            .pos = {0.5f, -0.5f, 0.5f},
+            .uv = {1, 0} 
+            },
+            (vert) {
+            .pos = {0.5f, 0.5f, 0.5f},
+            .uv = {1, 1} 
+            },
+            (vert) {
+            .pos = {-0.5f, 0.5f, 0.5f},
+            .uv = {0, 1} 
+            },
 
-    vertvec_push_list(&vb->verts, 36, 
-            (vert){
-            .pos = {-0.5f, -0.5f, -0.5f}, 
-            .uv = {0.0f, 0.0f}
+            // Top face
+            (vert) {
+                .pos = {-0.5f, 0.5f, 0.5f},
+                .uv = {0, 0} 
             },
-            (vert){
-            .pos = {0.5f, -0.5f, -0.5f}, 
-            .uv = {1.0f, 0.0f}
+            (vert) {
+                .pos = {0.5f, 0.5f, 0.5f},
+                .uv = {1, 0} 
             },
-            (vert){
-            .pos = {0.5f, 0.5f, -0.5f}, 
-            .uv = {1.0f, 1.0f}
+            (vert) {
+                .pos = {0.5f, 0.5f, -0.5f},
+                .uv = {1, 1} 
             },
-            (vert){
-            .pos = {0.5f, 0.5f, -0.5f}, 
-            .uv = {1.0f, 1.0f}
+            (vert) {
+                .pos = {-0.5f, 0.5f, -0.5f},
+                .uv = {0, 1} 
             },
-            (vert){
-            .pos = {-0.5f, 0.5f, -0.5f}, 
-            .uv = {0.0f, 1.0f}
+
+            // Back face
+            (vert) {
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .uv = {0, 0} 
             },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 0.0f}
+            (vert) {
+                .pos = {0.5f, -0.5f, -0.5f},
+                .uv = {1, 0} 
             },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
+            (vert) {
+                .pos = {0.5f, 0.5f, -0.5f},
+                .uv = {1, 1} 
             },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
+            (vert) {
+                .pos = {-0.5f, 0.5f, -0.5f},
+                .uv = {0, 1} 
             },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 1.0f}
+
+            // Bottom face
+            (vert) {
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .uv = {0, 0} 
             },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 1.0f}
+            (vert) {
+                .pos = {0.5f, -0.5f, -0.5f},
+                .uv = {1, 0} 
             },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {0.0f, 1.0f}
+            (vert) {
+                .pos = {0.5f, -0.5f, 0.5f},
+                .uv = {1, 1} 
             },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
+            (vert) {
+                .pos = {-0.5f, -0.5f, 0.5f},
+                .uv = {0, 1} 
             },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
+
+            // Left face
+            (vert) {
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .uv = {0, 0} 
             },
-            (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
+            (vert) {
+                .pos = {-0.5f, -0.5f, 0.5f},
+                .uv = {1, 0} 
             },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
+            (vert) {
+                .pos = {-0.5f, 0.5f, 0.5f},
+                .uv = {1, 1} 
             },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
+            (vert) {
+                .pos = {-0.5f, 0.5f, -0.5f},
+                .uv = {0, 1} 
             },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
+
+            // Right face
+            (vert) {
+                .pos = {0.5f, -0.5f, 0.5f},
+                .uv = {0, 0} 
             },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
+            (vert) {
+                .pos = {0.5f, -0.5f, -0.5f},
+                .uv = {1, 0} 
             },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
+            (vert) {
+                .pos = {0.5f, 0.5f, -0.5f},
+                .uv = {1, 1} 
             },
-            (vert){
-                .pos = {0.5f, 0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
-            },
-            (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-            },
-            (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-            },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-            },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-            },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-            },
-            (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
-            },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-            },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-            },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-            },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-            },
-            (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-            },
-            (vert){
-                .pos = {0.5f, 0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
-            },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-            },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-            },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-            },
-            (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
+            (vert) {
+                .pos = {0.5f, 0.5f, 0.5f},
+                .uv = {0, 1} 
             });
+}
+
+void push_indices(index_buf *ib)
+{
+    uivec_push_list(&ib->indices, 36,
+            // Front face
+            0, 1, 2,
+            2, 3, 0,
+            // Top face
+            4, 5, 6,
+            6, 7, 4,
+            // Back face
+            8, 9, 10,
+            10, 11, 8,
+            // Bottom face
+            12, 13, 14,
+            14, 15, 12,
+            // Left face
+            16, 17, 18,
+            18, 19, 16,
+            // Right face
+            20, 21, 22,
+            22, 23, 20 );
 }
 
 void key_callback(GLFWwindow *handle, int key, int scancode, int action, int mods)
