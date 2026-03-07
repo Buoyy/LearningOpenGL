@@ -36,6 +36,11 @@ boolean window_create(window_t *window, int width, int height, const char *title
     glfwMakeContextCurrent(window->handle);
     glfwSetWindowUserPointer(window->handle, window);
     glfwSetFramebufferSizeCallback(window->handle, framebuffer_size_callback);
+    glfwSetKeyCallback(window->handle, key_callback);
+    glfwSetCursorPosCallback(window->handle, mouse_callback);
+    glfwSetScrollCallback(window->handle, scroll_callback);
+    glfwSetInputMode(window->handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     window->width = width;
     window->height = height;
     window->title = title;

@@ -1,11 +1,12 @@
 #include "renderer/renderer.h"
 #include "engine/window.h"
+#include "engine/camera.h"
 #include "renderer/texture.h"
 //#include "util/debug.h"
 #include "renderer/shader.h"
 #include "renderer/vert_array.h"
 #include "renderer/vert_buf.h"
-#include "renderer/index_buf.h"
+//#include "renderer/index_buf.h"
 #include "util/types.h"
 
 #include <cglm/vec3.h>
@@ -15,175 +16,40 @@
 //#include <math.h>
 #include <stddef.h>
 
+#define WIN_WIDTH 960
+#define WIN_HEIGHT 720
+
+void push_verts(vert_buf *vb);
+
+camera cam = { 0 };
+float delta_time = .0f, last_frame_time = .0f;
+
+// Mouse input globals
+float last_x = (float)WIN_WIDTH/2, last_y = (float)WIN_HEIGHT/2;
+boolean mouse_first = true, mouse_invert = false;
+
 int main()
 {
     window_t window;
-    if (!window_create(&window, 800, 600, "HALO"))
+    if (!window_create(&window, WIN_WIDTH, WIN_HEIGHT, "HALO"))
         return 1;
     renderer_init(&window);
 
     vert_array va; va_create(&va);
     vert_buf vb; vb_create(&vb);
-
-    // VERT PUSHER HELL YEAHH. START!
-
-    vertvec_push_list(&vb.verts, 36, 
-            (vert){
-            .pos = {-0.5f, -0.5f, -0.5f}, 
-            .uv = {0.0f, 0.0f}
-        },
-            (vert){
-            .pos = {0.5f, -0.5f, -0.5f}, 
-            .uv = {1.0f, 0.0f}
-        },
-            (vert){
-            .pos = {0.5f, 0.5f, -0.5f}, 
-            .uv = {1.0f, 1.0f}
-        },
-            (vert){
-            .pos = {0.5f, 0.5f, -0.5f}, 
-            .uv = {1.0f, 1.0f}
-        },
-            (vert){
-            .pos = {-0.5f, 0.5f, -0.5f}, 
-            .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-        },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 1.0f}
-        },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-            },
-            (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, -0.5f}, 
-                .uv = {1.0f, 1.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .uv = {1.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .uv = {0.0f, 0.0f}
-        },
-            (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .uv = {0.0f, 1.0f}
-        });
+    push_verts(&vb);
 
     vec3 cube_pos[] = {
-     {0.0f,  0.0f,  0.0f}, 
-     {2.0f,  5.0f, -15.0f}, 
-     {-1.5f, -2.2f, -2.5f},  
-     {-3.8f, -2.0f, -12.3f},  
-     {2.4f, -0.4f, -3.5f},  
-     {-1.7f,  3.0f, -7.5f},  
-     {1.3f, -2.0f, -2.5f},  
-     {1.5f,  2.0f, -2.5f}, 
-     {1.5f,  0.2f, -1.5f}, 
-     {-1.3f,  1.0f, -1.5f} };
+        {0.0f,  0.0f,  0.0f}, 
+        {2.0f,  5.0f, -15.0f}, 
+        {-1.5f, -2.2f, -2.5f},  
+        {-3.8f, -2.0f, -12.3f},  
+        {2.4f, -0.4f, -3.5f},  
+        {-1.7f,  3.0f, -7.5f},  
+        {1.3f, -2.0f, -2.5f},  
+        {1.5f,  2.0f, -2.5f}, 
+        {1.5f,  0.2f, -1.5f}, 
+        {-1.3f,  1.0f, -1.5f} };
 
     // END.
 
@@ -192,13 +58,7 @@ int main()
     // Texture Coords
     va_add_attrib(1, 2, GL_FLOAT, GL_FALSE, sizeof(vert), (void*)offsetof(vert, uv)); 
 
-    index_buf ib; ib_create(&ib);
-    uivec_push_list(&ib.indices, 6,
-            0, 1, 2,
-            2, 0, 3);
-
     vb_push_verts(&vb, GL_STATIC_DRAW);
-    ib_push_indices(&ib, GL_STATIC_DRAW);
     va_unbind();
 
     stbi_set_flip_vertically_on_load(true);
@@ -219,26 +79,28 @@ int main()
     shader_set_int(&shader, "tex1", 0);
     shader_set_int(&shader, "tex2", 1);
 
-    vec3 rot_axis = {1, 0.5, 0};
-    glm_normalize(rot_axis);
+    camera_create(&cam, (vec3){0,0,2}, 3.f, 0.05f);
 
     while (!window_should_close(&window))
     {
+        float current_frame_time = glfwGetTime();
+        delta_time = current_frame_time - last_frame_time;
+        last_frame_time = current_frame_time;
+
         renderer_clear((solid_color){50, 97, 97});
 
         texture_2d_activate(&container);
         texture_2d_activate(&face);
 
-        mat4 view; glm_mat4_identity(view);
-        mat4 proj; glm_mat4_identity(proj);
-        glm_translate(view, (vec3){0,0,-3});
-        float aspect = (float)window.width/window.height;
-        glm_perspective(glm_rad(45), aspect, .1f, 100.0f, proj);
-
-        shader_use(&shader);
+        mat4 view; camera_view_mat(&cam, view);
         shader_set_mat4(&shader, "view", view);
+
+        mat4 proj;
+        glm_perspective(glm_rad(cam.zoom), (float)window.width/(float)window.height, .1f, 100.0f, proj);
         shader_set_mat4(&shader, "projection", proj);
 
+
+        shader_use(&shader);
         va_bind(&va);
         for (uint i = 0; i < 10; ++i)
         {
@@ -246,10 +108,15 @@ int main()
             glm_translate(model, cube_pos[i]);
             vec3 rot_axis;
             if (i%2 == 0)
+            {
                 glm_vec3_copy((vec3){1,0.3,0}, rot_axis);
-            else if (i%3 == 0)
+                glm_rotate(model, (float)glfwGetTime(), rot_axis);
+            }
+            else //if (i%3 == 0)
+            {
                 glm_vec3_copy((vec3){0.3,0.1,0.5}, rot_axis);
-            glm_rotate(model, (float)glfwGetTime(), rot_axis);
+                glm_rotate(model, (float)2*glfwGetTime(), rot_axis);
+            }
             shader_set_mat4(&shader, "model", model);
 
             renderer_draw_triangles(0, 36);
@@ -263,10 +130,220 @@ int main()
 
     texture_2d_destroy(&container);
     texture_2d_destroy(&face);
-    ib_destroy(&ib);
     vb_destroy(&vb);
     va_destroy(&va);
     shader_destroy(&shader);
     window_destroy(&window);
     return 0;
+}
+
+void push_verts(vert_buf *vb)
+{
+    // VERT PUSHER HELL YEAHH. START!
+
+    vertvec_push_list(&vb->verts, 36, 
+            (vert){
+            .pos = {-0.5f, -0.5f, -0.5f}, 
+            .uv = {0.0f, 0.0f}
+            },
+            (vert){
+            .pos = {0.5f, -0.5f, -0.5f}, 
+            .uv = {1.0f, 0.0f}
+            },
+            (vert){
+            .pos = {0.5f, 0.5f, -0.5f}, 
+            .uv = {1.0f, 1.0f}
+            },
+            (vert){
+            .pos = {0.5f, 0.5f, -0.5f}, 
+            .uv = {1.0f, 1.0f}
+            },
+            (vert){
+            .pos = {-0.5f, 0.5f, -0.5f}, 
+            .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 1.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, -0.5f}, 
+                .uv = {1.0f, 1.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, -0.5f}, 
+                .uv = {1.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, -0.5f}, 
+                .uv = {1.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, -0.5f}, 
+                .uv = {1.0f, 1.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .uv = {1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, -0.5f}, 
+                .uv = {0.0f, 1.0f}
+            });
+}
+/*
+   void process_input(GLFWwindow *window)
+   {
+   printf("%d", glfwGetKey(window, GLFW_KEY_ESCAPE));
+   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+   if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+   glm_vec3_sub(cam_pos, front_speed, cam_pos);
+   if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+   glm_vec3_sub(cam_pos, strafe_speed, cam_pos);
+   if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+   glm_vec3_add(cam_pos, strafe_speed, cam_pos);
+   }*/
+
+void key_callback(GLFWwindow *handle, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(handle, true);
+
+    if ((key == GLFW_KEY_UP || key == GLFW_KEY_W)
+            && action == GLFW_PRESS)
+        camera_process_keyboard(&cam, CAMERA_MOVE_FORWARD, delta_time);
+    if ((key == GLFW_KEY_DOWN || key == GLFW_KEY_S)
+            && action == GLFW_PRESS)
+        camera_process_keyboard(&cam, CAMERA_MOVE_BACKWARD, delta_time);
+    if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_A)
+            && action == GLFW_PRESS) 
+        camera_process_keyboard(&cam, CAMERA_MOVE_LEFT, delta_time);
+    if ((key == GLFW_KEY_RIGHT || key == GLFW_KEY_D)
+            && action == GLFW_PRESS)
+        camera_process_keyboard(&cam, CAMERA_MOVE_RIGHT, delta_time);
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+        camera_process_keyboard(&cam, CAMERA_MOVE_UP, delta_time);
+    if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
+        camera_process_keyboard(&cam, CAMERA_MOVE_DOWN, delta_time);
+
+    (void)scancode; (void)mods;
+}
+
+void mouse_callback(GLFWwindow *handle, double xpos, double ypos)
+{
+    if (mouse_first)
+    {
+        last_x = (float)xpos;
+        last_y = (float)ypos;
+        mouse_first = false;
+    }
+    float delta_x = xpos - last_x;
+    float delta_y = (mouse_invert) ? -(last_y - ypos) : (last_y - ypos);
+    last_x = (float)xpos;
+    last_y = (float)ypos;
+    camera_process_mouse_move(&cam, delta_x, delta_y, true);
+    (void)handle;
+}
+
+void scroll_callback(GLFWwindow *handle, double xoffset, double yoffset)
+{
+    camera_process_mouse_scroll(&cam, yoffset);
+    (void)handle; (void)xoffset;
 }

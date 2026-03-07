@@ -18,7 +18,7 @@ target_include_directories(game
 if (MSVC)
     target_compile_options(game PRIVATE /W4)
 else()
-    target_compile_options(game PRIVATE -Wall -Wextra -Werror)
+    target_compile_options(game PRIVATE -Wall -Werror -Wextra)
 endif()
 
 include(FetchContent)

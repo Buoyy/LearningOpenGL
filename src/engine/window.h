@@ -6,6 +6,10 @@
 
 #include "util/types.h"
 
+void key_callback(GLFWwindow *handle, int key, int scancode, int action, int mods);
+void mouse_callback(GLFWwindow *handle, double xpos, double ypos);
+void scroll_callback(GLFWwindow *handle, double xoffset, double yoffset);
+
 typedef struct
 {
     GLFWwindow *handle;
