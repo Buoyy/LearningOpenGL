@@ -73,8 +73,9 @@ int main()
         renderer_clear((solid_color){10, 10, 10});
         
         // Object 
+        float blue = (sinf((float)glfwGetTime())+1)/2;
         shader_use(&basic_shader);
-        shader_set_float3(&basic_shader, "light_color", 1.0f, 1.0f, 1.0f);
+        shader_set_float3(&basic_shader, "light_color", 1.0f, 1.0f, blue);
         shader_set_float3(&basic_shader, "obj_color", 0.3f, 0.0f, 0.3f);
         mat4 model, view, proj;
         glm_mat4_identity(model);
