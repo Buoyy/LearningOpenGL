@@ -8,7 +8,6 @@
 typedef struct 
 {
     vec3 pos;
-    vec2 uv;
 } vert;
 
 // A vector (dynamic array) of vertices.

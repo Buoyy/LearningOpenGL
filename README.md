@@ -2,7 +2,7 @@
 Learning some OpenGL with C as the CPU-side language. Mess around with the inputs to your liking to get the essence of graphics programming.
 
 ## Description (Lighting):
-Wow, so empty
+There is a black void with a purple cube and a white cube, which is acting as the light source.
 
 ## Building:
 Run `build.sh` on **Unix based platforms** or `build.bat` on **Windows.** You may also go to the CML file and change the build type to `Release` instead of `Debug` if you want the program not to instantly stop when it runs into a problem.

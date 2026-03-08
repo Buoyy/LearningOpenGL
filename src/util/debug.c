@@ -2,12 +2,7 @@
 #include <glad/glad.h>
 #include <stdio.h>
 
-#define MAX_ERROR_LENGTH 30 // INVALID_FRAMEBUFFER_OPERATION
-
-DEF_PRINT_GLM_VEC(2)
-DEF_PRINT_GLM_VEC(3)
-DEF_PRINT_GLM_VEC(4)
-DEF_PRINT_MAT_SQ(4)
+#define MAX_ERROR_LENGTH 30 // INVALID_FRAMEBUFFER_OPERATIO
 
 void debug_clear_errors()
 {

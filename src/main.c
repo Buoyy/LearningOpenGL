@@ -1,8 +1,10 @@
-#include "renderer/index_buf.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include "renderer/renderer.h"
 #include "engine/window.h"
+#include "renderer/index_buf.h"
 #include "engine/camera.h"
-#include "renderer/texture.h"
 //#include "util/debug.h"
 #include "renderer/shader.h"
 #include "renderer/vert_array.h"
@@ -10,8 +12,6 @@
 //#include "renderer/index_buf.h"
 #include "util/types.h"
 
-#include <GLFW/glfw3.h>
-#include <cglm/vec3.h>
 #include <stb_image.h>
 #include <cglm/cglm.h>
 
@@ -25,7 +25,10 @@ void push_verts(vert_buf *vb);
 void push_indices(index_buf *ib);
 
 camera cam = { 0 };
-float delta_time = .0f, last_frame_time = .0f;
+vec3 cam_init_pos = { 0, 0.3, 3 };
+float delta_time = .0f, last_frame = .0f;
+
+vec3 light_pos = { 1.2, 3, 2 };
 
 // Mouse input globals
 float last_x = (float)WIN_WIDTH/2, last_y = (float)WIN_HEIGHT/2;
@@ -34,117 +37,77 @@ boolean mouse_first = true, mouse_invert = false;
 int main()
 {
     window_t window;
-    if (!window_create(&window, WIN_WIDTH, WIN_HEIGHT, "HALO"))
-return 1;
+    ASSERTM(window_create(&window, WIN_WIDTH, WIN_HEIGHT, "C-GL"), "Window creation failed");
     renderer_init(&window);
-    camera_create(&cam, (vec3){0,0,2}, 3.f, 0.05f);
-    vert_array va; va_create(&va);
+    camera_create(&cam, cam_init_pos, 2.0f, 0.1f);
+
+    shader_t basic_shader;
+    ASSERTM(shader_create(&basic_shader, "res/shaders/basic.vert", "res/shaders/basic.frag"), "Basic shader creation fail");
+
+    shader_t light_src_shader;
+    ASSERTM(shader_create(&light_src_shader, "res/shaders/light.vert", "res/shaders/light.frag"), 
+            "Lighting shader creation fail");
+
+    vert_array obj_va; va_create(&obj_va);
     vert_buf vb; vb_create(&vb);
     index_buf ib; ib_create(&ib);
 
-    push_verts(&vb);
-    push_indices(&ib);
-
-    //vertvec_destroy(&vb.verts);
-    //uivec_destroy(&ib.indices);
-
-    vec3 cube_pos[] = {
-        {0.0f,  0.0f,  0.0f}, 
-        {2.0f,  5.0f, -15.0f}, 
-        {-1.5f, -2.2f, -2.5f},  
-        {-3.8f, -2.0f, -12.3f},  
-        {2.4f, -0.4f, -3.5f},  
-        {-1.7f,  3.0f, -7.5f},  
-        {1.3f, -2.0f, -2.5f},  
-        {1.5f,  2.0f, -2.5f}, 
-        {1.5f,  0.2f, -1.5f}, 
-        {-1.3f,  1.0f, -1.5f} };
-
-    // END.
-
-    // Position 
-    va_add_attrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (void*)offsetof(vert, pos));
-    // Texture Coords
-    va_add_attrib(1, 2, GL_FLOAT, GL_FALSE, sizeof(vert), (void*)offsetof(vert, uv)); 
-
+    push_verts(&vb); push_indices(&ib);
+    // Position
+    va_add_attrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, pos));
     vb_push_verts(&vb, GL_STATIC_DRAW);
     ib_push_indices(&ib, GL_STATIC_DRAW);
-    va_unbind();
 
-    stbi_set_flip_vertically_on_load(true);
-    texture_2d container; 
-    texture_2d_create(&container, 0);
-    texture_2d_params(&container, GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR);
-    texture_2d_load("res/textures/container.jpg", GL_RGB);
 
-    texture_2d face; 
-    texture_2d_create(&face, 1);
-    texture_2d_params(&face, GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR);
-    texture_2d_load("res/textures/awesomeface.png", GL_RGBA);
-
-    shader_t shader;
-    if (!shader_create(&shader, "res/shaders/basic.vert", "res/shaders/basic.frag"))
-        return false;
-    shader_use(&shader);
-    shader_set_int(&shader, "tex1", 0);
-    shader_set_int(&shader, "tex2", 1);
-
+    vert_array light_va; va_create(&light_va);
+    vb_bind(&vb); ib_bind(&ib);
+    va_add_attrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, pos));
+ 
     while (!window_should_close(&window))
     {
-        float current_frame_time = glfwGetTime();
-        delta_time = current_frame_time - last_frame_time;
-        last_frame_time = current_frame_time;
+        float current_frame = glfwGetTime();
+        delta_time = current_frame - last_frame;
+        last_frame = current_frame;
         camera_move(&cam, delta_time);
 
-        renderer_clear((solid_color){50, 97, 97});
+        renderer_clear((solid_color){10, 10, 10});
+        
+        // Object 
+        shader_use(&basic_shader);
+        shader_set_float3(&basic_shader, "light_color", 1.0f, 1.0f, 1.0f);
+        shader_set_float3(&basic_shader, "obj_color", 0.3f, 0.0f, 0.3f);
+        mat4 model, view, proj;
+        glm_mat4_identity(model);
+        camera_view_mat(&cam, view);
+        glm_perspective(glm_rad(cam.zoom), (float)window.width/(float)window.height, 0.1f, 100.0f, proj);
+        shader_set_mat4(&basic_shader, "model", model);
+        shader_set_mat4(&basic_shader, "view", view);
+        shader_set_mat4(&basic_shader, "proj", proj);
 
-        texture_2d_activate(&container);
-        texture_2d_activate(&face);
+        va_bind(&obj_va);
+        renderer_draw_elements(GL_TRIANGLES, &ib);
 
-        mat4 view; camera_view_mat(&cam, view);
-        shader_set_mat4(&shader, "view", view);
+        // Light source 
+        shader_use(&light_src_shader);
+        glm_mat4_identity(model);
+        glm_translate(model, light_pos);
+        glm_scale(model, (vec3){0.2,0.2,0.2});
+        shader_set_mat4(&light_src_shader, "model", model);
+        shader_set_mat4(&light_src_shader, "view", view);
+        shader_set_mat4(&light_src_shader, "proj", proj);
 
-        mat4 proj;
-        glm_perspective(glm_rad(cam.zoom), (float)window.width/(float)window.height, .1f, 100.0f, proj);
-        shader_set_mat4(&shader, "projection", proj);
-
-
-        shader_use(&shader);
-        va_bind(&va);
-        for (uint i = 0; i < 10; ++i)
-        {
-            mat4 model; glm_mat4_identity(model);
-            glm_translate(model, cube_pos[i]);
-            vec3 rot_axis;
-              if (i%2 == 0)
-              {
-              glm_vec3_copy((vec3){1,0.3,0}, rot_axis);
-              glm_rotate(model, (float)glfwGetTime(), rot_axis);
-              }
-              else //if (i%3 == 0)
-              {
-              glm_vec3_copy((vec3){0.3,0.1,0.5}, rot_axis);
-              glm_rotate(model, (float)2*glfwGetTime(), rot_axis);
-              }
-            shader_set_mat4(&shader, "model", model);
-
-            renderer_draw_elements(GL_TRIANGLES, &ib);
-        }
+        va_bind(&light_va);
+        renderer_draw_elements(GL_TRIANGLES, &ib);
 
         window_swap_buffers(&window);
         window_poll_events();
     }
 
-    // Final destruction, hell yeah.
-
-    texture_2d_destroy(&container);
-    texture_2d_destroy(&face);
+    va_destroy(&obj_va);
+    va_destroy(&light_va);
     ib_destroy(&ib);
     vb_destroy(&vb);
-    va_destroy(&va);
-    shader_destroy(&shader);
     window_destroy(&window);
-    return 0;
 }
 
 void push_verts(vert_buf *vb)
@@ -153,110 +116,86 @@ void push_verts(vert_buf *vb)
     vertvec_push_list(&vb->verts, 24,
             // Front face
             (vert) {
-            .pos = {-0.5f, -0.5f, 0.5f},
-            .uv = {0, 0}
+            .pos = {-0.5f, -0.5f, 0.5f}
             }, 
             (vert) {
-            .pos = {0.5f, -0.5f, 0.5f},
-            .uv = {1, 0} 
+            .pos = {0.5f, -0.5f, 0.5f}
             },
             (vert) {
-            .pos = {0.5f, 0.5f, 0.5f},
-            .uv = {1, 1} 
+            .pos = {0.5f, 0.5f, 0.5f}
             },
             (vert) {
-            .pos = {-0.5f, 0.5f, 0.5f},
-            .uv = {0, 1} 
+            .pos = {-0.5f, 0.5f, 0.5f}
             },
 
             // Top face
             (vert) {
-                .pos = {-0.5f, 0.5f, 0.5f},
-                .uv = {0, 0} 
+            .pos = {-0.5f, 0.5f, 0.5f}
             },
             (vert) {
-                .pos = {0.5f, 0.5f, 0.5f},
-                .uv = {1, 0} 
+            .pos = {0.5f, 0.5f, 0.5f}
             },
             (vert) {
-                .pos = {0.5f, 0.5f, -0.5f},
-                .uv = {1, 1} 
+                .pos = {0.5f, 0.5f, -0.5f}
             },
             (vert) {
-                .pos = {-0.5f, 0.5f, -0.5f},
-                .uv = {0, 1} 
+                .pos = {-0.5f, 0.5f, -0.5f}
             },
 
             // Back face
             (vert) {
-                .pos = {-0.5f, -0.5f, -0.5f},
-                .uv = {0, 0} 
+                .pos = {-0.5f, -0.5f, -0.5f}
             },
             (vert) {
-                .pos = {0.5f, -0.5f, -0.5f},
-                .uv = {1, 0} 
+                .pos = {0.5f, -0.5f, -0.5f}
             },
             (vert) {
-                .pos = {0.5f, 0.5f, -0.5f},
-                .uv = {1, 1} 
+                .pos = {0.5f, 0.5f, -0.5f}
             },
             (vert) {
-                .pos = {-0.5f, 0.5f, -0.5f},
-                .uv = {0, 1} 
+                .pos = {-0.5f, 0.5f, -0.5f}
             },
 
             // Bottom face
             (vert) {
-                .pos = {-0.5f, -0.5f, -0.5f},
-                .uv = {0, 0} 
+                .pos = {-0.5f, -0.5f, -0.5f}
             },
             (vert) {
-                .pos = {0.5f, -0.5f, -0.5f},
-                .uv = {1, 0} 
+                .pos = {0.5f, -0.5f, -0.5f}
             },
             (vert) {
-                .pos = {0.5f, -0.5f, 0.5f},
-                .uv = {1, 1} 
+                .pos = {0.5f, -0.5f, 0.5f}
             },
             (vert) {
-                .pos = {-0.5f, -0.5f, 0.5f},
-                .uv = {0, 1} 
+                .pos = {-0.5f, -0.5f, 0.5f}
             },
 
             // Left face
             (vert) {
-                .pos = {-0.5f, -0.5f, -0.5f},
-                .uv = {0, 0} 
+                .pos = {-0.5f, -0.5f, -0.5f}
             },
             (vert) {
-                .pos = {-0.5f, -0.5f, 0.5f},
-                .uv = {1, 0} 
+                .pos = {-0.5f, -0.5f, 0.5f}
             },
             (vert) {
-                .pos = {-0.5f, 0.5f, 0.5f},
-                .uv = {1, 1} 
+                .pos = {-0.5f, 0.5f, 0.5f}
             },
             (vert) {
-                .pos = {-0.5f, 0.5f, -0.5f},
-                .uv = {0, 1} 
+                .pos = {-0.5f, 0.5f, -0.5f}
             },
 
             // Right face
             (vert) {
-                .pos = {0.5f, -0.5f, 0.5f},
-                .uv = {0, 0} 
+                .pos = {0.5f, -0.5f, 0.5f}
             },
             (vert) {
                 .pos = {0.5f, -0.5f, -0.5f},
-                .uv = {1, 0} 
             },
             (vert) {
                 .pos = {0.5f, 0.5f, -0.5f},
-                .uv = {1, 1} 
             },
             (vert) {
                 .pos = {0.5f, 0.5f, 0.5f},
-                .uv = {0, 1} 
             });
 }
 
@@ -307,6 +246,8 @@ void key_callback(GLFWwindow *handle, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_LEFT_CONTROL)
         camera_process_keyboard(&cam, CAMERA_MOVE_DOWN);
 
+    if (key == GLFW_KEY_R)
+        glm_vec3_copy(cam_init_pos, cam.pos);
 }
 
 void mouse_callback(GLFWwindow *handle, double xpos, double ypos)

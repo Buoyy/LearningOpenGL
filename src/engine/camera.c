@@ -29,7 +29,7 @@ void camera_move(camera *cam, float dt)
     vec3 right;
     glm_vec3_scale(cam->right, speed, right);
     vec3 up = {0,1,0};
-    glm_vec3_scale(up, speed * 0.1, up);
+    glm_vec3_scale(up, speed * 0.5, up);
     vec3 zero; glm_vec3_zero(zero);
 
     if (cam->m_forward)

@@ -55,32 +55,7 @@ void print_mat##N(mat##N mat, const char *name)\
 
 // ---------------------------------------------
 
-#define DECL_PRINT_GLM_VEC(N)\
-void print_vec##N(vec##N vec, const char *name);\
-
-#define DECL_PRINT_GLM_IVEC(N)\
-void print_ivec##N(vec##N vec, const char *name);\
-
-#define DEF_PRINT_GLM_VEC(N)\
-void print_vec##N(vec##N vec, const char *name)\
-{\
-    printf("%s ", name);\
-    glm_vec##N##_print(vec, stdout);\
-}\
-
-#define DEF_PRINT_GLM_IVEC(N)\
-void print_ivec##N(vec##N vec, const char *name)\
-{\
-    printf("%s ", name);\
-    glm_ivec##N##_print(vec, stdout);\
-}\
-
 void debug_clear_errors(void);
 void debug_halt_on_error(const char *file, int line);
-
-DECL_PRINT_GLM_VEC(2)
-DECL_PRINT_GLM_VEC(3)
-DECL_PRINT_GLM_VEC(4)
-DECL_PRINT_MAT_SQ(4)
 
 #endif
