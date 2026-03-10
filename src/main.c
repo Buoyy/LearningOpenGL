@@ -24,10 +24,10 @@
 void push_verts(vert_buf *vb);
 
 camera cam = { 0 };
-vec3 cam_init_pos = { 0, 0.3, 3 };
+vec3 cam_init_pos = { 0, 0, 3 };
 float delta_time = .0f, last_frame = .0f;
 
-vec3 light_pos = { 2, 1, -2 };
+vec3 light_pos = { 1.2, 1, 2 };
 
 // Mouse input globals
 float last_x = (float)WIN_WIDTH/2, last_y = (float)WIN_HEIGHT/2;
@@ -57,14 +57,13 @@ int main()
     va_add_attrib(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, norm));
     vb_push_verts(&vb, GL_STATIC_DRAW);
 
-
     vert_array light_va; va_create(&light_va);
     vb_bind(&vb);
     va_add_attrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, pos));
  
     while (!window_should_close(&window))
     {
-        float current_frame = glfwGetTime();
+        float current_frame = (float)glfwGetTime();
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
         camera_move(&cam, delta_time);
@@ -74,24 +73,42 @@ int main()
         // Moving the lamp in a strange time varying curve 
         float xz_radius = 5;
         light_pos[0] = xz_radius * (float)cos(glfwGetTime());
-        light_pos[1] = 3 * (float)cos(3*glfwGetTime());
+        //light_pos[1] = 3 * (float)cos(3*glfwGetTime());
         light_pos[2] = xz_radius * (float)sin(glfwGetTime());
 
-        // Object 
         shader_use(&obj_shader);
-        shader_set_float3(&obj_shader, "Ulight_color",
-                1.0f, 1.0f, 1.0f);
-        shader_set_float3(&obj_shader, "Uobj_color",
-                1.0f, 0.5f, 0.31f);
-        shader_set_float3(&obj_shader, "Ulight_pos",
-            light_pos[0], light_pos[1], light_pos[2]);
         mat4 model, view, proj;
+        vec3 light_color = {
+            sin(2 * glfwGetTime()),
+            sin(0.7 * glfwGetTime()),
+            sin(1.3 * glfwGetTime())
+        };
+        // vec3 light_color = {1,1,1};
+        vec3 diffuse_color, ambient_color;
+        glm_vec3_mul(light_color, (vec3){0.5,0.5,0.5}, diffuse_color);
+        glm_vec3_mul(diffuse_color, (vec3){0.2,0.2,0.2}, ambient_color);
         glm_mat4_identity(model);
         camera_view_mat(&cam, view);
         glm_perspective(glm_rad(cam.zoom), (float)window.width/(float)window.height, 0.1f, 100.0f, proj);
+        shader_set_fvec3(&obj_shader, "light.pos", light_pos);
+        shader_set_fvec3(&obj_shader, "view_pos", cam.pos);
         shader_set_mat4(&obj_shader, "model", model);
         shader_set_mat4(&obj_shader, "view", view);
         shader_set_mat4(&obj_shader, "proj", proj);
+        shader_set_fvec3(&obj_shader, "light.ambient",
+                ambient_color);
+        shader_set_fvec3(&obj_shader, "light.diffuse",
+                diffuse_color);
+        shader_set_fvec3(&obj_shader, "light.specular",
+                (vec3){1,1,1});
+        shader_set_fvec3(&obj_shader, "material.ambient",
+                (vec3){0.0215,0.1745,0.0215});
+        shader_set_fvec3(&obj_shader, "material.diffuse",
+                (vec3){0.07568,0.61424,0.07568});
+        shader_set_fvec3(&obj_shader, "material.specular",
+                (vec3){0.633,0.727811,0.633});
+        shader_set_float(&obj_shader, "material.shininess", 0.6 * 128);
+
 
         va_bind(&obj_va);
         renderer_draw_triangles(0, 36);

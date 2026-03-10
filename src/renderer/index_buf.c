@@ -2,7 +2,7 @@
 #include "renderer/index_buf.h"
 #include <glad/glad.h>
 
-VECTOR_DEFINE(unsigned int, uivec);
+VECTOR_DEFINE(uint, uivec);
 void uivec_push_list(uivec *vec, int count, ...)
 {
     va_list uints;

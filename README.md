@@ -2,7 +2,7 @@
 Learning some OpenGL with C as the CPU-side language. Mess around with the inputs to your liking to get the essence of graphics programming.
 
 ## Description (Lighting):
-There is a black void with a coral cube (main object) and a white cube, which is acting as a lamp. The lamp is sinusoidally revolving around the object to showcase the effects of Phong lighting.
+There is a black void with an emerald cube (main object) and a white cube, which is acting as a lamp. The lamp is changing colors and revolving around the object to showcase the effects of Phong lighting.
 
 ## Building:
 Run `build.sh` for **GCC or Clang** or `build.bat` on **MSVC.** You may also go to the CML file and change the build type to `Release` instead of `Debug` if you want the program not to instantly stop when it runs into a problem.

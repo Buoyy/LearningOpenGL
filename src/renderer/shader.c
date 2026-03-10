@@ -8,10 +8,6 @@
 #define INFO_LOG_LENGTH 512
 #define SHADER_TYPENAME_LENGTH 4
 
-DEF_SHADER_UNI_SET(int, int, i);
-DEF_SHADER_UNI_SET(float, float, f);
-DEF_SHADER_UNI_SET(boolean, boolean, i);
-
 DEF_SHADER_MAT_SET_SQ(4);
 
 static boolean shader_part_validate(unsigned int id)
@@ -128,3 +124,58 @@ void shader_destroy(shader_t *shader)
     GL(glDeleteProgram(shader->id));
 }
 
+void shader_set_float(shader_t *shader, const char *name, float value)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform1f(location, value));
+}
+
+void shader_set_int(shader_t *shader, const char *name, int value)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform1i(location, value));
+}
+
+void shader_set_fvec2(shader_t *shader, const char *name, float *vec)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform2f(location, vec[0], vec[1]));
+}
+
+void shader_set_fvec3(shader_t *shader, const char *name, float *vec)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform3f(location, vec[0], vec[1], vec[2]));
+}
+
+void shader_set_fvec4(shader_t *shader, const char *name, float *vec)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform4f(location, vec[0], vec[1], vec[2], vec[3]));
+}
+
+void shader_set_ivec2(shader_t *shader, const char *name, int *vec)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform2i(location, vec[0], vec[1]));
+}
+
+void shader_set_ivec3(shader_t *shader, const char *name, int *vec)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform3i(location, vec[0], vec[1], vec[2]));
+}
+
+void shader_set_ivec4(shader_t *shader, const char *name, int *vec)
+{
+    GL(int location = glGetUniformLocation(shader->id, name));
+    ASSERTM((location != -1), "Uniform '%s' not found!", name);
+    GL(glUniform4i(location, vec[0], vec[1], vec[2], vec[3]));
+}

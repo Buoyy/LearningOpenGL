@@ -2,6 +2,7 @@
 #define E_DEBUG_H
 
 #include <cglm/cglm.h>
+#include <util/types.h>
 #include <stdio.h>
 
 #ifndef NDEBUG
@@ -18,29 +19,15 @@
 #define BREAKPOINT() __debugbreak()
 #endif
 
-#define ERR_ASSERT(X)\
-    fprintf(stderr, "ASSERT::FAIL(%s)\n", #X);\
-    fprintf(stderr, "FILE::%s\n\n", __FILE__);\
-    fprintf(stderr, "FUNC::%s, LINE::%d\n", __func__, __LINE__);\
-
-#define ASSERT(X) if (!(X))\
-{\
-    ERR_ASSERT(X);\
-    BREAKPOINT();\
-}\
-
-#define ASSERTM(X, FMT, ...) if (!(X))\
-{\
-    ERR_ASSERT(X);\
-    fprintf(stderr, "\n" FMT "\n", ##__VA_ARGS__);\
-    BREAKPOINT();\
-}
+#define ASSERTM(X, ...) assertm_impl(X, __FILE__, __LINE__, __VA_ARGS__)
+#define ASSERT(X) assert_impl(X, __FILE__, __LINE__)
 
 #define GL(X) debug_clear_errors(); X; debug_halt_on_error(__FILE__, __LINE__);
+
 #else
 #define GL(X) X 
+#define ASSERTM(X, ...)
 #define ASSERT(X)
-#define ASSERTM(X)
 #endif
 
 #define DECL_PRINT_MAT_SQ(N)\
@@ -54,6 +41,9 @@ void print_mat##N(mat##N mat, const char *name)\
 }\
 
 // ---------------------------------------------
+
+void assert_impl(boolean condition, const char *file, int line);
+void assertm_impl(boolean condition, const char *file, int line, const char *fmt, ...);
 
 void debug_clear_errors(void);
 void debug_halt_on_error(const char *file, int line);

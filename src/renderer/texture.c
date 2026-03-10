@@ -49,7 +49,7 @@ void texture_2d_load(const char *filepath, uint format)
 {
     int x, y, channels;
     byte *pixels = stbi_load(filepath, &x, &y, &channels, 0);
-    ASSERT(pixels);
+    ASSERT(pixels != NULL);
     GL(glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, pixels));
     GL(glGenerateMipmap(GL_TEXTURE_2D));
     stbi_image_free(pixels);
