@@ -11,7 +11,7 @@ void texture_2d_create(texture_2d *tex, uint index)
 {
     GL(glGenTextures(1, &tex->id));
     tex->index = GL_TEXTURE0 + index;
-    texture_2d_bind(tex);
+    texture_2d_activate(tex);
 }
 
 void texture_2d_activate(texture_2d *tex)
@@ -53,6 +53,13 @@ void texture_2d_load(const char *filepath, uint format)
     GL(glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, pixels));
     GL(glGenerateMipmap(GL_TEXTURE_2D));
     stbi_image_free(pixels);
+}
+
+void texture_2d_create_default(texture_2d *tex, uint index, const char *filepath, uint format)
+{
+    texture_2d_create(tex, index);
+    texture_2d_params(tex, GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR);
+    texture_2d_load(filepath, format);
 }
 
 void texture_2d_destroy(texture_2d *tex)

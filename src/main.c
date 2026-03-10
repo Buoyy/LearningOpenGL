@@ -3,13 +3,12 @@
 
 #include "renderer/renderer.h"
 #include "engine/window.h"
-//#include "renderer/index_buf.h"
 #include "engine/camera.h"
 //#include "util/debug.h"
 #include "renderer/shader.h"
 #include "renderer/vert_array.h"
 #include "renderer/vert_buf.h"
-//#include "renderer/index_buf.h"
+#include "renderer/texture.h"
 #include "util/types.h"
 
 #include <stb_image.h>
@@ -56,11 +55,24 @@ int main()
     // Normal 
     va_add_attrib(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, norm));
     vb_push_verts(&vb, GL_STATIC_DRAW);
+    va_add_attrib(2, 2, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, uv));
 
     vert_array light_va; va_create(&light_va);
     vb_bind(&vb);
     va_add_attrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, pos));
- 
+
+    texture_2d diff_map, spec_map, emm_map;
+    texture_2d_create_default(&diff_map, 0,
+        "res/textures/container2.png", GL_RGBA);
+    texture_2d_create_default(&spec_map, 1,
+        "res/textures/container2_spec.png", GL_RGBA);
+    texture_2d_create_default(&emm_map, 2,
+        "res/textures/matrix.jpg", GL_RGB);
+    shader_use(&obj_shader);
+    shader_set_int(&obj_shader, "material.diffuse", 0);
+    shader_set_int(&obj_shader, "material.specular", 1);
+    shader_set_int(&obj_shader, "material.emission", 2);
+
     while (!window_should_close(&window))
     {
         float current_frame = (float)glfwGetTime();
@@ -73,20 +85,20 @@ int main()
         // Moving the lamp in a strange time varying curve 
         float xz_radius = 5;
         light_pos[0] = xz_radius * (float)cos(glfwGetTime());
-        //light_pos[1] = 3 * (float)cos(3*glfwGetTime());
+        //light_pos[1] = 3.5 * (float)cos(3*glfwGetTime());
         light_pos[2] = xz_radius * (float)sin(glfwGetTime());
 
         shader_use(&obj_shader);
         mat4 model, view, proj;
-        vec3 light_color = {
+        /*vec3 light_color = {
             sin(2 * glfwGetTime()),
             sin(0.7 * glfwGetTime()),
             sin(1.3 * glfwGetTime())
         };
-        // vec3 light_color = {1,1,1};
+        
         vec3 diffuse_color, ambient_color;
         glm_vec3_mul(light_color, (vec3){0.5,0.5,0.5}, diffuse_color);
-        glm_vec3_mul(diffuse_color, (vec3){0.2,0.2,0.2}, ambient_color);
+        glm_vec3_mul(diffuse_color, (vec3){0.2,0.2,0.2}, ambient_color);*/
         glm_mat4_identity(model);
         camera_view_mat(&cam, view);
         glm_perspective(glm_rad(cam.zoom), (float)window.width/(float)window.height, 0.1f, 100.0f, proj);
@@ -96,19 +108,14 @@ int main()
         shader_set_mat4(&obj_shader, "view", view);
         shader_set_mat4(&obj_shader, "proj", proj);
         shader_set_fvec3(&obj_shader, "light.ambient",
-                ambient_color);
+                (vec3){0.15,0.15,0.15});
         shader_set_fvec3(&obj_shader, "light.diffuse",
-                diffuse_color);
+                (vec3){0.8,0.8,0.8});
         shader_set_fvec3(&obj_shader, "light.specular",
-                (vec3){1,1,1});
-        shader_set_fvec3(&obj_shader, "material.ambient",
-                (vec3){0.0215,0.1745,0.0215});
-        shader_set_fvec3(&obj_shader, "material.diffuse",
-                (vec3){0.07568,0.61424,0.07568});
-        shader_set_fvec3(&obj_shader, "material.specular",
-                (vec3){0.633,0.727811,0.633});
-        shader_set_float(&obj_shader, "material.shininess", 0.6 * 128);
-
+                (vec3){0.67,0.67,0.67});
+        shader_set_float(&obj_shader, "material.shininess", 64);
+        shader_set_float(&obj_shader, "time", glfwGetTime());
+        texture_2d_activate(&diff_map);
 
         va_bind(&obj_va);
         renderer_draw_triangles(0, 36);
@@ -137,161 +144,192 @@ int main()
 
 void push_verts(vert_buf *vb)
 {
-    vertvec_push_list(&vb->verts, 36, 
+    vertvec_push_list(&vb->verts, 36,
             // Front face
             (vert){
-            .pos = {-0.5f, -0.5f, -0.5f}, 
-            .norm = {0.0f, 0.0f, -1.0f}
+            .pos = {-0.5f, -0.5f, -0.5f},
+            .norm = {0.0f, 0.0f, -1.0f},
+            .uv = {0.0f, 0.0f}
             },
             (vert){
-            .pos = {0.5f, -0.5f, -0.5f}, 
-            .norm = {0.0f, 0.0f, -1.0f}
+            .pos = {0.5f, -0.5f, -0.5f},
+            .norm = {0.0f, 0.0f, -1.0f},
+            .uv = {1.0f, 0.0f}
             },
             (vert){
-            .pos = {0.5f, 0.5f, -0.5f}, 
-            .norm = {0.0f, 0.0f, -1.0f}
+            .pos = {0.5f, 0.5f, -0.5f},
+            .norm = {0.0f, 0.0f, -1.0f},
+            .uv = {1.0f, 1.0f}
             },
             (vert){
-            .pos = {0.5f, 0.5f, -0.5f}, 
-            .norm = {0.0f, 0.0f, -1.0f}
+            .pos = {0.5f, 0.5f, -0.5f},
+            .norm = {0.0f, 0.0f, -1.0f},
+            .uv = {1.0f, 1.0f}
             },
             (vert){
-            .pos = {-0.5f, 0.5f, -0.5f}, 
-            .norm = {0.0f, 0.0f, -1.0f}
+                .pos = {-0.5f, 0.5f, -0.5f},
+                .norm = {0.0f, 0.0f, -1.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .norm = {0.0f, 0.0f, -1.0f}
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .norm = {0.0f, 0.0f, -1.0f},
+                .uv = {0.0f, 0.0f}
             },
-
             // Back face
             (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .norm = {0.0f, 0.0f, 1.0f}
+                .pos = {-0.5f, -0.5f, 0.5f},
+                .norm = {0.0f, 0.0f, 1.0f},
+                .uv = {0.0f, 0.0f}
             },
             (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .norm = {0.0f, 0.0f, 1.0f}
+                .pos = {0.5f, -0.5f, 0.5f},
+                .norm = {0.0f, 0.0f, 1.0f},
+                .uv = {1.0f, 0.0f}
             },
             (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .norm = {0.0f, 0.0f, 1.0f}
+                .pos = {0.5f, 0.5f, 0.5f},
+                .norm = {0.0f, 0.0f, 1.0f},
+                .uv = {1.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .norm = {0.0f, 0.0f, 1.0f}
+                .pos = {0.5f, 0.5f, 0.5f},
+                .norm = {0.0f, 0.0f, 1.0f},
+                .uv = {1.0f, 1.0f}
             },
             (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .norm = {0.0f, 0.0f, 1.0f}
+                .pos = {-0.5f, 0.5f, 0.5f},
+                .norm = {0.0f, 0.0f, 1.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .norm = {0.0f, 0.0f, 1.0f}
+                .pos = {-0.5f, -0.5f, 0.5f},
+                .norm = {0.0f, 0.0f, 1.0f},
+                .uv = {0.0f, 0.0f}
             },
-
             // Left face
             (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .norm = {-1.0f, 0.0f, 0.0f}
+                .pos = {-0.5f, 0.5f, 0.5f},
+                .norm = {-1.0f, 0.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
             (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .norm = {-1.0f, 0.0f, 0.0f}
+                .pos = {-0.5f, 0.5f, -0.5f},
+                .norm = {-1.0f, 0.0f, 0.0f},
+                .uv = {1.0f, 1.0f}
             },
             (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .norm = {-1.0f, 0.0f, 0.0f}
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .norm = {-1.0f, 0.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .norm = {-1.0f, 0.0f, 0.0f}
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .norm = {-1.0f, 0.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .norm = {-1.0f, 0.0f, 0.0f}
+                .pos = {-0.5f, -0.5f, 0.5f},
+                .norm = {-1.0f, 0.0f, 0.0f},
+                .uv = {0.0f, 0.0f}
             },
             (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .norm = {-1.0f, 0.0f, 0.0f}
+                .pos = {-0.5f, 0.5f, 0.5f},
+                .norm = {-1.0f, 0.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
-
             // Right face
             (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .norm = {1.0f, 0.0f, 0.0f}
+                .pos = {0.5f, 0.5f, 0.5f},
+                .norm = {1.0f, 0.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
             (vert){
-                .pos = {0.5f, 0.5f, -0.5f}, 
-                .norm = {1.0f, 0.0f, 0.0f}
+                .pos = {0.5f, 0.5f, -0.5f},
+                .norm = {1.0f, 0.0f, 0.0f},
+                .uv = {1.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .norm = {1.0f, 0.0f, 0.0f}
+                .pos = {0.5f, -0.5f, -0.5f},
+                .norm = {1.0f, 0.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .norm = {1.0f, 0.0f, 0.0f}
+                .pos = {0.5f, -0.5f, -0.5f},
+                .norm = {1.0f, 0.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .norm = {1.0f, 0.0f, 0.0f}
+                .pos = {0.5f, -0.5f, 0.5f},
+                .norm = {1.0f, 0.0f, 0.0f},
+                .uv = {0.0f, 0.0f}
             },
             (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .norm = {1.0f, 0.0f, 0.0f}
+                .pos = {0.5f, 0.5f, 0.5f},
+                .norm = {1.0f, 0.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
-
             // Bottom face
             (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .norm = {0.0f, -1.0f, 0.0f}
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .norm = {0.0f, -1.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, -0.5f, -0.5f}, 
-                .norm = {0.0f, -1.0f, 0.0f}
+                .pos = {0.5f, -0.5f, -0.5f},
+                .norm = {0.0f, -1.0f, 0.0f},
+                .uv = {1.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .norm = {0.0f, -1.0f, 0.0f}
+                .pos = {0.5f, -0.5f, 0.5f},
+                .norm = {0.0f, -1.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
             (vert){
-                .pos = {0.5f, -0.5f, 0.5f}, 
-                .norm = {0.0f, -1.0f, 0.0f}
+                .pos = {0.5f, -0.5f, 0.5f},
+                .norm = {0.0f, -1.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
             (vert){
-                .pos = {-0.5f, -0.5f, 0.5f}, 
-                .norm = {0.0f, -1.0f, 0.0f}
+                .pos = {-0.5f, -0.5f, 0.5f},
+                .norm = {0.0f, -1.0f, 0.0f},
+                .uv = {0.0f, 0.0f}
             },
             (vert){
-                .pos = {-0.5f, -0.5f, -0.5f}, 
-                .norm = {0.0f, -1.0f, 0.0f}
+                .pos = {-0.5f, -0.5f, -0.5f},
+                .norm = {0.0f, -1.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             },
-
-            // Top face
+            // Top face 
             (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .norm = {0.0f, 1.0f, 0.0f}
-            },
-            (vert){
-                .pos = {0.5f, 0.5f, -0.5f}, 
-                .norm = {0.0f, 1.0f, 0.0f}
+                .pos = {-0.5f, 0.5f, -0.5f},
+                .norm = {0.0f, 1.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .norm = {0.0f, 1.0f, 0.0f}
+                .pos = {0.5f, 0.5f, -0.5f},
+                .norm = {0.0f, 1.0f, 0.0f},
+                .uv = {1.0f, 1.0f}
             },
             (vert){
-                .pos = {0.5f, 0.5f, 0.5f}, 
-                .norm = {0.0f, 1.0f, 0.0f}
+                .pos = {0.5f, 0.5f, 0.5f},
+                .norm = {0.0f, 1.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
             (vert){
-                .pos = {-0.5f, 0.5f, 0.5f}, 
-                .norm = {0.0f, 1.0f, 0.0f}
+                .pos = {0.5f, 0.5f, 0.5f},
+                .norm = {0.0f, 1.0f, 0.0f},
+                .uv = {1.0f, 0.0f}
             },
             (vert){
-                .pos = {-0.5f, 0.5f, -0.5f}, 
-                .norm = {0.0f, 1.0f, 0.0f}
+                .pos = {-0.5f, 0.5f, 0.5f},
+                .norm = {0.0f, 1.0f, 0.0f},
+                .uv = {0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, -0.5f},
+                .norm = {0.0f, 1.0f, 0.0f},
+                .uv = {0.0f, 1.0f}
             });
 }
 

@@ -16,6 +16,8 @@ void texture_2d_unbind();
 void texture_2d_load(const char *filepath, uint format);
 void texture_2d_param(uint pname, uint param);
 
+void texture_2d_create_default(texture_2d *tex, uint index, const char *filepath, uint format);
+
 // Order: S wrapping, T wrapping, Min and Mag filter.
 void texture_2d_params(texture_2d *tex, ...);
 void texture_2d_destroy(texture_2d *tex);
