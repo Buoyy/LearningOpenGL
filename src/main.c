@@ -3,7 +3,7 @@
 
 #include "renderer/renderer.h"
 #include "engine/window.h"
-#include "renderer/index_buf.h"
+//#include "renderer/index_buf.h"
 #include "engine/camera.h"
 //#include "util/debug.h"
 #include "renderer/shader.h"
@@ -18,17 +18,16 @@
 //#include <math.h>
 #include <stddef.h>
 
-#define WIN_WIDTH 960
-#define WIN_HEIGHT 720
+#define WIN_WIDTH 1064
+#define WIN_HEIGHT (3 * (WIN_WIDTH))/4
 
 void push_verts(vert_buf *vb);
-void push_indices(index_buf *ib);
 
 camera cam = { 0 };
 vec3 cam_init_pos = { 0, 0.3, 3 };
 float delta_time = .0f, last_frame = .0f;
 
-vec3 light_pos = { 1.2, 3, 2 };
+vec3 light_pos = { 2, 1, -2 };
 
 // Mouse input globals
 float last_x = (float)WIN_WIDTH/2, last_y = (float)WIN_HEIGHT/2;
@@ -41,26 +40,26 @@ int main()
     renderer_init(&window);
     camera_create(&cam, cam_init_pos, 2.0f, 0.1f);
 
-    shader_t basic_shader;
-    ASSERTM(shader_create(&basic_shader, "res/shaders/basic.vert", "res/shaders/basic.frag"), "Basic shader creation fail");
+    shader_t obj_shader;
+    ASSERTM(shader_create(&obj_shader, "res/shaders/obj.vert", "res/shaders/obj.frag"), "Object shader creation fail");
 
-    shader_t light_src_shader;
-    ASSERTM(shader_create(&light_src_shader, "res/shaders/light.vert", "res/shaders/light.frag"), 
+    shader_t lamp_shader;
+    ASSERTM(shader_create(&lamp_shader, "res/shaders/lamp.vert", "res/shaders/lamp.frag"), 
             "Lighting shader creation fail");
 
     vert_array obj_va; va_create(&obj_va);
     vert_buf vb; vb_create(&vb);
-    index_buf ib; ib_create(&ib);
 
-    push_verts(&vb); push_indices(&ib);
+    push_verts(&vb);
     // Position
     va_add_attrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, pos));
+    // Normal 
+    va_add_attrib(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, norm));
     vb_push_verts(&vb, GL_STATIC_DRAW);
-    ib_push_indices(&ib, GL_STATIC_DRAW);
 
 
     vert_array light_va; va_create(&light_va);
-    vb_bind(&vb); ib_bind(&ib);
+    vb_bind(&vb);
     va_add_attrib(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (const void*)offsetof(vert, pos));
  
     while (!window_should_close(&window))
@@ -71,34 +70,43 @@ int main()
         camera_move(&cam, delta_time);
 
         renderer_clear((solid_color){10, 10, 10});
-        
+
+        // Moving the lamp in a strange time varying curve 
+        float xz_radius = 5;
+        light_pos[0] = xz_radius * (float)cos(glfwGetTime());
+        light_pos[1] = 3 * (float)cos(3*glfwGetTime());
+        light_pos[2] = xz_radius * (float)sin(glfwGetTime());
+
         // Object 
-        float blue = (sinf((float)glfwGetTime())+1)/2;
-        shader_use(&basic_shader);
-        shader_set_float3(&basic_shader, "light_color", 1.0f, 1.0f, blue);
-        shader_set_float3(&basic_shader, "obj_color", 0.3f, 0.0f, 0.3f);
+        shader_use(&obj_shader);
+        shader_set_float3(&obj_shader, "Ulight_color",
+                1.0f, 1.0f, 1.0f);
+        shader_set_float3(&obj_shader, "Uobj_color",
+                1.0f, 0.5f, 0.31f);
+        shader_set_float3(&obj_shader, "Ulight_pos",
+            light_pos[0], light_pos[1], light_pos[2]);
         mat4 model, view, proj;
         glm_mat4_identity(model);
         camera_view_mat(&cam, view);
         glm_perspective(glm_rad(cam.zoom), (float)window.width/(float)window.height, 0.1f, 100.0f, proj);
-        shader_set_mat4(&basic_shader, "model", model);
-        shader_set_mat4(&basic_shader, "view", view);
-        shader_set_mat4(&basic_shader, "proj", proj);
+        shader_set_mat4(&obj_shader, "model", model);
+        shader_set_mat4(&obj_shader, "view", view);
+        shader_set_mat4(&obj_shader, "proj", proj);
 
         va_bind(&obj_va);
-        renderer_draw_elements(GL_TRIANGLES, &ib);
+        renderer_draw_triangles(0, 36);
 
         // Light source 
-        shader_use(&light_src_shader);
+        shader_use(&lamp_shader);
         glm_mat4_identity(model);
         glm_translate(model, light_pos);
         glm_scale(model, (vec3){0.2,0.2,0.2});
-        shader_set_mat4(&light_src_shader, "model", model);
-        shader_set_mat4(&light_src_shader, "view", view);
-        shader_set_mat4(&light_src_shader, "proj", proj);
+        shader_set_mat4(&lamp_shader, "model", model);
+        shader_set_mat4(&lamp_shader, "view", view);
+        shader_set_mat4(&lamp_shader, "proj", proj);
 
         va_bind(&light_va);
-        renderer_draw_elements(GL_TRIANGLES, &ib);
+        renderer_draw_triangles(0, 36);
 
         window_swap_buffers(&window);
         window_poll_events();
@@ -106,121 +114,168 @@ int main()
 
     va_destroy(&obj_va);
     va_destroy(&light_va);
-    ib_destroy(&ib);
     vb_destroy(&vb);
     window_destroy(&window);
 }
 
 void push_verts(vert_buf *vb)
 {
-    // VERT PUSHER HELL YEAHH. START!
-    vertvec_push_list(&vb->verts, 24,
+    vertvec_push_list(&vb->verts, 36, 
             // Front face
-            (vert) {
-            .pos = {-0.5f, -0.5f, 0.5f}
-            }, 
-            (vert) {
-            .pos = {0.5f, -0.5f, 0.5f}
+            (vert){
+            .pos = {-0.5f, -0.5f, -0.5f}, 
+            .norm = {0.0f, 0.0f, -1.0f}
             },
-            (vert) {
-            .pos = {0.5f, 0.5f, 0.5f}
+            (vert){
+            .pos = {0.5f, -0.5f, -0.5f}, 
+            .norm = {0.0f, 0.0f, -1.0f}
             },
-            (vert) {
-            .pos = {-0.5f, 0.5f, 0.5f}
+            (vert){
+            .pos = {0.5f, 0.5f, -0.5f}, 
+            .norm = {0.0f, 0.0f, -1.0f}
             },
-
-            // Top face
-            (vert) {
-            .pos = {-0.5f, 0.5f, 0.5f}
+            (vert){
+            .pos = {0.5f, 0.5f, -0.5f}, 
+            .norm = {0.0f, 0.0f, -1.0f}
             },
-            (vert) {
-            .pos = {0.5f, 0.5f, 0.5f}
+            (vert){
+            .pos = {-0.5f, 0.5f, -0.5f}, 
+            .norm = {0.0f, 0.0f, -1.0f}
             },
-            (vert) {
-                .pos = {0.5f, 0.5f, -0.5f}
-            },
-            (vert) {
-                .pos = {-0.5f, 0.5f, -0.5f}
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .norm = {0.0f, 0.0f, -1.0f}
             },
 
             // Back face
-            (vert) {
-                .pos = {-0.5f, -0.5f, -0.5f}
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .norm = {0.0f, 0.0f, 1.0f}
             },
-            (vert) {
-                .pos = {0.5f, -0.5f, -0.5f}
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .norm = {0.0f, 0.0f, 1.0f}
             },
-            (vert) {
-                .pos = {0.5f, 0.5f, -0.5f}
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .norm = {0.0f, 0.0f, 1.0f}
             },
-            (vert) {
-                .pos = {-0.5f, 0.5f, -0.5f}
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .norm = {0.0f, 0.0f, 1.0f}
             },
-
-            // Bottom face
-            (vert) {
-                .pos = {-0.5f, -0.5f, -0.5f}
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .norm = {0.0f, 0.0f, 1.0f}
             },
-            (vert) {
-                .pos = {0.5f, -0.5f, -0.5f}
-            },
-            (vert) {
-                .pos = {0.5f, -0.5f, 0.5f}
-            },
-            (vert) {
-                .pos = {-0.5f, -0.5f, 0.5f}
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .norm = {0.0f, 0.0f, 1.0f}
             },
 
             // Left face
-            (vert) {
-                .pos = {-0.5f, -0.5f, -0.5f}
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .norm = {-1.0f, 0.0f, 0.0f}
             },
-            (vert) {
-                .pos = {-0.5f, -0.5f, 0.5f}
+            (vert){
+                .pos = {-0.5f, 0.5f, -0.5f}, 
+                .norm = {-1.0f, 0.0f, 0.0f}
             },
-            (vert) {
-                .pos = {-0.5f, 0.5f, 0.5f}
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .norm = {-1.0f, 0.0f, 0.0f}
             },
-            (vert) {
-                .pos = {-0.5f, 0.5f, -0.5f}
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .norm = {-1.0f, 0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .norm = {-1.0f, 0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .norm = {-1.0f, 0.0f, 0.0f}
             },
 
             // Right face
-            (vert) {
-                .pos = {0.5f, -0.5f, 0.5f}
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .norm = {1.0f, 0.0f, 0.0f}
             },
-            (vert) {
-                .pos = {0.5f, -0.5f, -0.5f},
+            (vert){
+                .pos = {0.5f, 0.5f, -0.5f}, 
+                .norm = {1.0f, 0.0f, 0.0f}
             },
-            (vert) {
-                .pos = {0.5f, 0.5f, -0.5f},
+            (vert){
+                .pos = {0.5f, -0.5f, -0.5f}, 
+                .norm = {1.0f, 0.0f, 0.0f}
             },
-            (vert) {
-                .pos = {0.5f, 0.5f, 0.5f},
+            (vert){
+                .pos = {0.5f, -0.5f, -0.5f}, 
+                .norm = {1.0f, 0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .norm = {1.0f, 0.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .norm = {1.0f, 0.0f, 0.0f}
+            },
+
+            // Bottom face
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .norm = {0.0f, -1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, -0.5f}, 
+                .norm = {0.0f, -1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .norm = {0.0f, -1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, -0.5f, 0.5f}, 
+                .norm = {0.0f, -1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, 0.5f}, 
+                .norm = {0.0f, -1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, -0.5f, -0.5f}, 
+                .norm = {0.0f, -1.0f, 0.0f}
+            },
+
+            // Top face
+            (vert){
+                .pos = {-0.5f, 0.5f, -0.5f}, 
+                .norm = {0.0f, 1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, -0.5f}, 
+                .norm = {0.0f, 1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .norm = {0.0f, 1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {0.5f, 0.5f, 0.5f}, 
+                .norm = {0.0f, 1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, 0.5f}, 
+                .norm = {0.0f, 1.0f, 0.0f}
+            },
+            (vert){
+                .pos = {-0.5f, 0.5f, -0.5f}, 
+                .norm = {0.0f, 1.0f, 0.0f}
             });
-}
-
-void push_indices(index_buf *ib)
-{
-    uivec_push_list(&ib->indices, 36,
-            // Front face
-            0, 1, 2,
-            2, 3, 0,
-            // Top face
-            4, 5, 6,
-            6, 7, 4,
-            // Back face
-            8, 9, 10,
-            10, 11, 8,
-            // Bottom face
-            12, 13, 14,
-            14, 15, 12,
-            // Left face
-            16, 17, 18,
-            18, 19, 16,
-            // Right face
-            20, 21, 22,
-            22, 23, 20 );
 }
 
 void key_callback(GLFWwindow *handle, int key, int scancode, int action, int mods)

@@ -29,7 +29,7 @@ static boolean shader_part_validate(unsigned int id)
             case GL_VERTEX_SHADER: 
                 strncpy(typename, "VERT", 4); break;
             case GL_FRAGMENT_SHADER:
-                strncpy(typename, "VERT", 4); break;
+                strncpy(typename, "FRAG", 4); break;
             default: 
                 strncpy(typename, "NULL", 4); break;
         }

@@ -8,6 +8,7 @@
 typedef struct 
 {
     vec3 pos;
+    vec3 norm;
 } vert;
 
 // A vector (dynamic array) of vertices.
