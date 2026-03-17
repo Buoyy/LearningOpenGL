@@ -11,8 +11,7 @@ uniform mat4 model, view, proj;
 void main()
 {
     Fpos = vec3(model * vec4(Vpos, 1.0));
-    mat4 norm_mat = transpose(inverse(model));
-    Fnorm = vec3(norm_mat * vec4(Fpos, 1.0));
+    Fnorm = mat3(transpose(inverse(model))) * Vnorm;
     Fuv = Vuv;
     gl_Position = proj * view * model * vec4(Vpos, 1.0);
 }

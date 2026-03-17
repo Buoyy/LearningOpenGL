@@ -6,20 +6,38 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Debug)
 
-file(GLOB_RECURSE SOURCES src/*.c)
-
-add_executable(game ${SOURCES})
-target_include_directories(game 
-    SYSTEM PRIVATE external
-)
-target_include_directories(game 
-    PRIVATE src
-)
 if (MSVC)
-    target_compile_options(game PRIVATE /W4)
+set(ALL_LIBS glfw opengl32)
 else()
-    target_compile_options(game PRIVATE -Wall -Werror -Wextra)
+set(ALL_LIBS glfw GL m)
 endif()
+
+file(GLOB SOURCES 
+    src/engine/*.c
+    src/util/*.c
+    src/renderer/*.c
+    src/glad.c
+    src/stb_image.c
+)
+
+function(add_executable_common name)
+    # Forward all arguments (including source files and other keywords) to add_executable
+    add_executable(${ARGV})
+    # Point to include directories
+    target_include_directories(${name}
+        SYSTEM PRIVATE external
+    )
+    target_include_directories(${name}
+        PRIVATE src
+    )
+    if (MSVC)
+        target_compile_options(light PRIVATE /W4)
+    else()
+        target_compile_options(light PRIVATE -Wall -Werror -Wextra)
+    endif()
+    # Link the created target to the common libraries
+    target_link_libraries(${name} PRIVATE ${ALL_LIBS}) #
+endfunction()
 
 include(FetchContent)
 
@@ -36,15 +54,6 @@ if(NOT glfw3_FOUND)
     FetchContent_MakeAvailable(glfw)
 endif()
 
-if (MSVC)
-    target_link_libraries(game
-        glfw
-        opengl32
-    )
-else()
-    target_link_libraries(game
-        m
-        glfw
-        GL
-    )
-endif()
+add_executable_common(light ${SOURCES} src/lighting.c)
+add_executable_common(basics ${SOURCES} src/basics.c)
+
